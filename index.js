@@ -1,51 +1,88 @@
-const express = require('express');
-const { Configuration, OpenAIApi } = require('openai');
-const cors = require('cors');
-require('dotenv').config();
-
+const express = require("express");
+const { Configuration, OpenAIApi } = require("openai");
+const cors = require("cors");
+require("dotenv").config();
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 app.use(cors());
+
 app.use(express.json());
 
-const openaiConfig = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAIApi(configuration);
+
+// app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("Hello");
 });
 
-const openai = new OpenAIApi(openaiConfig);
 
-app.get('/', (req, res) => {
-  res.send('Hello');
-});
 
-async function generateResponse(req, res, prompt) {
+// for code
+//https://gai-201-server-language-converter.vercel.app/code/python
+
+app.post("/code/:data", async (req, res) => {
+  let { data } = req.params;
+  let { code } = req.body;
+  
+
   try {
-    const { code } = req.body;
-    const completion = await openai.createCompletion({
-      model: 'text-davinci-003',
-      prompt,
-      max_tokens: 2048,
+    const comp = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Convert this code ${code} into ${data}`,
+      max_tokens: 2040,
     });
-    res.send(completion.data.choices[0].text);
+    res.send(comp.data.choices[0].text);
   } catch (error) {
-    res.send('error');
+    res.send(console.log(error));
   }
-}
-
-app.post('/code/:data', async (req, res) => {
-  const { data } = req.params;
-  await generateResponse(req, res, `Convert this code ${req.body.code} into ${data}`);
 });
 
-app.post('/debug', async (req, res) => {
-  await generateResponse(req, res, `Debug this code ${req.body.code} if there is an error in it`);
-});
 
-app.post('/quality', async (req, res) => {
-  await generateResponse(req, res, `Check this code ${req.body.code} quality is good or not`);
-});
+// for debug 
+//https://gai-201-server-language-converter.vercel.app/debugcode
+app.post("/debugcode", async (req, res) => {
+    let { code } = req.body;
+    console.log(code);
+  
+    try {
+      const comp = await openai.createCompletion({
+        model: "text-davinci-003",
+        prompt: `Debug this code ${code} if there is an error in this code`,
+        max_tokens: 2040,
+      });
+      res.send(comp.data.choices[0].text);
+    } catch (err) {
+      res.send(console.log(err));
+    }
+  });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+
+  // for quality
+//https://gai-201-server-language-converter.vercel.app/qualitycode
+
+app.post("/qualitycode", async (req, res) => {
+    let { code } = req.body;
+    console.log(code);
+  
+    try {
+      const comp = await openai.createCompletion({
+        model: "text-davinci-003",
+        prompt: `Check the code ${code} quality is good or bad`,
+        max_tokens: 2040,
+      });
+
+      res.send(comp.data.choices[0].text);
+    } catch (err) {
+      res.send(console.log(err));
+    }
+  });
+
+
+app.listen(process.env.port, () => {
+  console.log(`Srver at running on port ${process.env.port}`);
 });
