@@ -83,6 +83,6 @@ app.post("/qualitycode", async (req, res) => {
   });
 
 
-app.listen(process.env.port, () => {
-  console.log(`Srver at running on port ${process.env.port}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Srver at running on port ${process.env.PORT}`);
 });
